@@ -30,6 +30,10 @@ Resources:
       Runtime: python3.12
       Timeout: 45
       MemorySize: 128
+      Environment:
+        Variables:
+          SNS_TOPIC: !Ref SNSTopicName
+          DYNAMO_TABLE: !Ref DynamoDbTableName
       Handler: disney_scrapper.lambda_handler.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
