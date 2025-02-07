@@ -18,7 +18,8 @@ Application to notify users when Disney hotels become available below desired pr
 Setup infrastructure as follows:
 
 1. Define an SNS topic to be used commonly across projects
-2. Create the CloudFormation from the [cloudformation.yml](./cloudformation.yml)
+2. Create a DynamoDB table with a _partition-key_ name of `resort_key` as a String
+3. Create the CloudFormation from the [cloudformation.yml](./cloudformation.yml)
 
 ## Configuration
 
@@ -73,6 +74,6 @@ Ensure you have the following dependencies installed:
     poetry self add poetry-plugin-export
     ```
 
-License
+## License
 
 This project is licensed under MIT.

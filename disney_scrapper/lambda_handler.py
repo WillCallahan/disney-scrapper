@@ -5,7 +5,7 @@ from disney_scrapper.load import load_to_sns
 from disney_scrapper.transform import transform_to_message
 
 
-def handle_request(request, resorts):
+def handle_request(request, resorts, dynamo_table_name):
     check_in_date = request.get('check_in_date', None)
     check_out_date = request.get('check_out_date', None)
     adult_count = request.get('adult_count', 0)
@@ -13,15 +13,22 @@ def handle_request(request, resorts):
     max_price = request.get('max_price', None)
     exclude_resorts = request.get('exclude_resorts', [])
     reservations = get_reservations(check_in_date, check_out_date, adult_count, child_count)
-    message = transform_to_message(resorts, reservations, max_price, exclude_resorts, check_in_date, check_out_date)
+    message = transform_to_message(resorts,
+                                   reservations,
+                                   max_price,
+                                   exclude_resorts,
+                                   check_in_date,
+                                   check_out_date,
+                                   dynamo_table_name)
     return message
 
 
 def handle_all_requests(requests):
     sns_topic = os.environ.get('SNS_TOPIC', 'arn:aws:sns:us-east-1:157482313302:disney-notification-topic')
+    dynamo_table_name = os.environ.get('DYNAMO_TABLE', 'disney_reservation_checklist')
     resorts = get_resorts()
     for request in requests:
-        message = handle_request(request, resorts)
+        message = handle_request(request, resorts, dynamo_table_name)
         if not message:
             print(f'No reservations found {request=}')
             continue

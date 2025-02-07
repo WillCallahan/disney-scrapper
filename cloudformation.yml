@@ -17,12 +17,19 @@ Parameters:
     Description: ARN of the SNS topic to notify end users
     Default: disney-notification-topic
 
+  DynamoDbTableName:
+    Type: String
+    Description: Name of the DynamoDB Table with a "resort_key" partition-key
+    Default: disney_reservation_checklist
+
 Resources:
   DisneyNotificationLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-fn"
       Runtime: python3.12
+      Timeout: 45
+      MemorySize: 128
       Handler: disney_scrapper.lambda_handler.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
@@ -54,6 +61,11 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                Resource: !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${DynamoDbTableName}'
 
   EventBridgeRule:
     Type: AWS::Events::Rule
