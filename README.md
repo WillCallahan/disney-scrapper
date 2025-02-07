@@ -4,6 +4,15 @@ Application to notify users when Disney hotels become available below desired pr
 
 ![Architecture Diagram](./docs/images/disney-scrapper-architecture.png)
 
+## Methodology
+
+1. Event Bridge invokes the scrapper lambda every four hours
+2. The Lambda pulls resort prices from the Disney API
+3. Resorts are filtered based on the maximum price a client is willing to pay
+4. Prices from the last check in DynamoDB are compared and filtered out if the price has not dropped
+5. Matching resorts are sent to the SNS topic
+6. The SNS topic sends messages to targets like Email and SMS for mobile notifications
+
 ## Infrastructure
 
 Setup infrastructure as follows:
@@ -19,7 +28,7 @@ The event bridge rule may be configured to input JSON to the lambda given the fo
 - `check_out_date`: Hotel Check-out date (YYYY-mm-dd)
 - `adult_count`: Number of adults $a\in\mathbb{N}$
 - `child_count`: Number of children $c\in\mathbb{N}$
-- `max_price`: Maximum price allowed for reservation $\{ m\in\mathbb{N} \mid a>0 \}$
+- `max_price`: Maximum price allowed for reservation $\{ m\in\mathbb{R} \mid a>0 \}$
 - `exclude_resorts`: Resorts to exclude by name as a substring of the restort
 
 ```json
@@ -37,7 +46,7 @@ The event bridge rule may be configured to input JSON to the lambda given the fo
 
 ## Run
 
-Run the application using the local `lambda_handler` python file.
+You can run the application locally using the `lambda_handler`:
 
 ```shell
 python disney_scapper/lambda_handler.py
@@ -54,6 +63,8 @@ poetry build-lambda
 
 ## Dependencies
 
+Ensure you have the following dependencies installed:
+
 - [Poetry](https://python-poetry.org/)
 - [Poetry Lambda-Build](https://github.com/micmurawski/poetry-plugin-lambda-build)
 
@@ -61,3 +72,7 @@ poetry build-lambda
     poetry self add poetry-plugin-lambda-build
     poetry self add poetry-plugin-export
     ```
+
+License
+
+This project is licensed under MIT.
