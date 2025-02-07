@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Notify users when disney hotels are available at specific prices
+
+Parameters:
+  S3CodeBucket:
+    Type: String
+    Description: S3 bucket containing the code
+    Default: code.prod.callahanwilliam
+
+  S3CodeKey:
+    Type: String
+    Description: S3 key containing the code
+    Default: ad-hoc/disney-scrapper/disney-scrapper.zip
+
+  SNSTopicName:
+    Type: String
+    Description: ARN of the SNS topic to notify end users
+    Default: disney-notification-topic
+
+Resources:
+  DisneyNotificationLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-fn"
+      Runtime: python3.12
+      Handler: disney_scrapper.lambda_handler.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref S3CodeBucket
+        S3Key: !Ref S3CodeKey
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-role"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub "${AWS::StackName}-policy"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SNSTopicName}"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+
+  EventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${AWS::StackName}-ebr"
+      ScheduleExpression: rate(4 hours)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DisneyNotificationLambda.Arn
+          Id: LambdaTarget
+          Input: '[{"check_in_date":"2025-04-04","check_out_date":"2025-04-05","adult_count":2,"child_count":0,"max_price":300,"exclude_resorts":["Art of Animation"]}]'
+
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DisneyNotificationLambda
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt EventBridgeRule.Arn
