@@ -32,7 +32,7 @@ Resources:
       MemorySize: 128
       Environment:
         Variables:
-          SNS_TOPIC: !Ref SNSTopicName
+          SNS_TOPIC: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SNSTopicName}'
           DYNAMO_TABLE: !Ref DynamoDbTableName
       Handler: disney_scrapper.lambda_handler.lambda_handler
       Role: !GetAtt LambdaExecutionRole.Arn
@@ -58,7 +58,7 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: sns:Publish
-                Resource: !Sub "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SNSTopicName}"
+                Resource: !Sub 'arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SNSTopicName}'
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
