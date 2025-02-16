@@ -17,7 +17,7 @@ def _swap_price_in_dynamo(table_name, partition_key, new_price):
 
     try:
         response = table.get_item(Key = { 'resort_key': partition_key })
-        old_price = float(response.get('Item', { }).get('price'))
+        old_price = response.get('Item', { }).get('price')
 
         table.update_item(
             Key = { 'resort_key': partition_key },
@@ -25,7 +25,7 @@ def _swap_price_in_dynamo(table_name, partition_key, new_price):
             ExpressionAttributeValues = { ':val': Decimal(new_price) }
         )
 
-        return old_price
+        return old_price if not old_price else float(old_price)
     except Exception as e:
         print(f'Error fetching item from dynamo: {e}')
         return None
